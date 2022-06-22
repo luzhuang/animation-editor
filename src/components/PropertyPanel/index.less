@@ -1,0 +1,53 @@
+
+.propertyPanel {
+  padding-right: 30px;
+  .ant-btn-primary {
+    background: transparent;
+    color: #333;
+    border-color: transparent;
+    box-shadow: none;
+    &:hover,
+    &:focus {
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+  .buttonGroup {
+    display: flex;
+    .ant-btn-primary:not(:first-child):not(:last-child) {
+      border-right-color: transparent;
+      border-left-color: transparent;
+    }
+    .ant-btn-primary:last-child:not(:first-child),
+    .ant-btn-group .ant-btn-primary + .ant-btn-primary {
+      border-right-color: transparent;
+      border-left-color: transparent;
+    }
+    .ant-btn-primary:first-child:not(:last-child) {
+      border-right-color: transparent;
+    }
+  }
+  .currentTimeInput {
+    display: flex;
+    width: 100px;
+  }
+  .propertyItemOperate {
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: all;
+  }
+}
+.propertyItem {
+  height: 24px;
+}
+.propertyNameWrap {
+  line-height: 24px;
+  padding-left: 30px;
+}
+.operationWrap {
+  display: flex;
+  padding-left: 30px;
+  height: 36px;
+  justify-content: space-between;
+}
