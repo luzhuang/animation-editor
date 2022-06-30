@@ -1,13 +1,14 @@
-
 .propertyPanel {
-  padding-right: 30px;
-  .ant-btn-primary {
+  padding-right: 4px;
+  background-color: #1d1e20;
+  .icon-btn {
     background: transparent;
-    color: #333;
+    color: #c4c4c4;
     border-color: transparent;
     box-shadow: none;
     &:hover,
     &:focus {
+      color: #fff;
       background: transparent;
       border-color: transparent;
       box-shadow: none;
@@ -15,6 +16,7 @@
   }
   .buttonGroup {
     display: flex;
+    align-items: center;
     .ant-btn-primary:not(:first-child):not(:last-child) {
       border-right-color: transparent;
       border-left-color: transparent;
@@ -28,14 +30,33 @@
       border-right-color: transparent;
     }
   }
-  .currentTimeInput {
+  .inputWrap {
+    display: flex;
+  }
+  .inputLabel {
+    margin-right: 4px;
+  }
+  .samples {
     display: flex;
     width: 100px;
+    color: #fff;
+    align-items: center;
+    margin-right: 10px;
+  }
+  .currentFrame {
+    display: flex;
+    width: 100px;
+    align-items: center;
+
   }
   .propertyItemOperate {
     display: flex;
     justify-content: flex-end;
     pointer-events: all;
+  }
+  .addBtnWrap {
+    display: flex;
+    justify-content: center;
   }
 }
 .propertyItem {
@@ -43,11 +64,11 @@
 }
 .propertyNameWrap {
   line-height: 24px;
-  padding-left: 30px;
+  padding-left: 4px;
 }
 .operationWrap {
   display: flex;
-  padding-left: 30px;
+  padding-left: 4px;
   height: 36px;
   justify-content: space-between;
 }

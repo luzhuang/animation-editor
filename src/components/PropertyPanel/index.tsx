@@ -1,11 +1,4 @@
-import {
-  CaretRightOutlined,
-  FlagOutlined,
-  PauseOutlined,
-  PlusSquareOutlined,
-  StopOutlined,
-  UndoOutlined
-} from "@ant-design/icons";
+import { CaretRightOutlined, PauseOutlined, PlusSquareOutlined, UndoOutlined } from "@ant-design/icons";
 import { Button, Col, Input, Row } from "antd";
 import React, { Component } from "react";
 import "./index.less";
@@ -40,7 +33,7 @@ export class PropertyPanel extends Component<any> {
   render() {
     const { properties, playing } = this.state;
     const { togglePlay } = this;
-    const { onStop, onReplay, onSetDuration, onSetCurrentTime } = this.props;
+    const { onStop, onReplay, onSetDuration, onSetCurrentTime: onSetCurrentFrame } = this.props;
     const propertyItems = properties.map((property: any, index: number) => {
       const { name, data, onAdd } = property;
       return (
@@ -66,25 +59,51 @@ export class PropertyPanel extends Component<any> {
       <div className="propertyPanel">
         <Row className="operationWrap">
           <Button.Group size="small" className="buttonGroup">
-            <Button type="primary" icon={playing ? <PauseOutlined /> : <CaretRightOutlined />} onClick={togglePlay} />
-            <Button type="primary" icon={<UndoOutlined />} onClick={onReplay} />
-            <Button type="primary" icon={<FlagOutlined />} onClick={onSetDuration} />
-          </Button.Group>
-          <div className="currentTime">
-            <Input
-              className="currentTimeInput"
-              placeholder="currentTime"
-              size="small"
-              onChange={(e) => {
-                const { value } = e.target;
-                if (!isNaN(+value)) {
-                  onSetCurrentTime(value);
-                }
-              }}
+            <Button
+              className="icon-btn"
+              type="primary"
+              icon={playing ? <PauseOutlined /> : <CaretRightOutlined />}
+              onClick={togglePlay}
             />
+            <Button className="icon-btn" type="primary" icon={<UndoOutlined />} onClick={onReplay} />
+          </Button.Group>
+          <div className="inputWrap">
+            <div className="samples">
+              <Input
+                prefix={<span>samples:</span>}
+                placeholder="samples"
+                size="small"
+                defaultValue={60}
+                onChange={(e) => {
+                  const { value } = e.target;
+                  if (!isNaN(+value)) {
+                    onSetCurrentFrame(value);
+                  }
+                }}
+              />
+            </div>
+            <div className="currentFrame">
+              <Input
+                prefix={<span>current:</span>}
+                placeholder="currentFrame"
+                size="small"
+                defaultValue={0}
+                onChange={(e) => {
+                  const { value } = e.target;
+                  if (!isNaN(+value)) {
+                    onSetCurrentFrame(value);
+                  }
+                }}
+              />
+            </div>
           </div>
         </Row>
         {propertyItems}
+        <div className="addBtnWrap">
+          <Button icon={<PlusSquareOutlined />} onClick={onReplay}>
+            Add Property
+          </Button>
+        </div>
       </div>
     );
   }

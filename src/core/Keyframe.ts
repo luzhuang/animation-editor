@@ -1,80 +1,85 @@
-export class Keyframe {
-  id: any;
-  ctx: any;
-  _data: any;
-  canvas: any;
-  keyframeTime: any;
-  duration: number;
+import { CanvasInfo } from "./Timeline";
+export interface KeyframeData {
+  id: number;
+  keyframeTime: number;
   lineIndex: number;
-  calPosFunc: any;
-  dpr: any;
+  editable: boolean;
+  draggable: boolean;
+}
+
+export interface KeyframeParam {
+  ctx: CanvasRenderingContext2D;
+  lineIndex: number;
+  scrollTop: number;
+  keyframeData: KeyframeData;
+  dpr: number;
+  config: {
+    defaultColor: string;
+    selectedColor: string;
+    unEditableColor: string;
+    unDraggableColor: string;
+  };
+}
+
+export class Keyframe {
+  id: number;
+  ctx: CanvasRenderingContext2D;
+  canvas: HTMLCanvasElement;
+  keyframeTime: number;
+  lineIndex: number;
+  dpr: number;
   x: number;
   y: number;
-  scrollTop: any;
+  scrollTop: number;
   selected: boolean;
-  flags: any;
-  editable: any;
-  draggable: any;
-  defaultColor: any;
-  selectedColor: any;
-  unEditableColor: any;
-  unDraggableColor: any;
-  flagColor: any;
-  canvasInfo: any;
+  editable: boolean;
+  draggable: boolean;
+  defaultColor: string;
+  selectedColor: string;
+  unEditableColor: string;
+  unDraggableColor: string;
+  canvasInfo?: CanvasInfo;
   width: number = 0;
-  get data() {
-    const { id, keyframeTime, duration, lineIndex, flags, _data, editable, draggable } = this;
+
+  get data(): KeyframeData {
+    const { id, keyframeTime, lineIndex, editable, draggable } = this;
     return {
       id,
       keyframeTime,
-      duration,
       lineIndex,
-      data: _data,
-      flags,
       editable,
       draggable
     };
   }
-  constructor(params: any) {
-    const { ctx, calPosFunc, lineIndex = 0, scrollTop = 0, keyframeData, dpr = 1 } = params;
+  constructor(params: KeyframeParam) {
     const {
-      id,
-      keyframeTime,
-      duration,
-      flags,
-      data,
-      editable = true,
-      draggable = true,
-      defaultColor = "#9AF",
-      selectedColor = "#FC6",
-      unEditableColor,
-      unDraggableColor,
-      flagColor = "#fff"
-    } = keyframeData;
+      ctx,
+      lineIndex = 0,
+      scrollTop = 0,
+      keyframeData,
+      dpr = 1,
+      config: { defaultColor, selectedColor, unEditableColor, unDraggableColor }
+    } = params;
+    const { id, keyframeTime, editable = true, draggable = true } = keyframeData;
     this.id = id;
     this.ctx = ctx;
-    this._data = data;
     this.canvas = ctx.canvas;
     this.keyframeTime = keyframeTime;
-    this.duration = +duration || 0;
     this.lineIndex = +lineIndex;
-    this.calPosFunc = calPosFunc;
     this.dpr = dpr;
     this.x = 0;
     this.y = 0;
     this.scrollTop = scrollTop;
     this.selected = false;
-    this.flags = flags || [];
     this.editable = editable;
     this.draggable = draggable;
     this.defaultColor = defaultColor;
     this.selectedColor = selectedColor;
     this.unEditableColor = unEditableColor || defaultColor;
     this.unDraggableColor = unDraggableColor || defaultColor;
-    this.flagColor = flagColor;
   }
 
-  update(session: any, canvasInfo: any) {
+  update(canvasInfo: any) {
     this.canvasInfo = canvasInfo;
   }
 
@@ -90,7 +95,7 @@ export class Keyframe {
       unEditableColor,
       unDraggableColor
     } = this;
-    const { timelineHeight, rowHeight: lineHeight } = this.canvasInfo;
+    const { timelineHeight, rowHeight: lineHeight } = this.canvasInfo!;
     ctx.save();
     const y = timelineHeight + this.lineIndex * lineHeight - scrollTop;
     ctx.fillStyle = defaultColor;
@@ -106,44 +111,16 @@ export class Keyframe {
     ctx.globalAlpha = 1;
     const offsetY = (this.y = y + lineHeight * 0.5);
     ctx.strokeStyle = defaultColor;
-    const posStart = (this.x = this.calPosFunc(this.keyframeTime / 1000));
-    const posEnd = this.calPosFunc((this.keyframeTime + this.duration) / 1000);
-    this.width = posEnd - posStart;
+    const pos = this.x;
     const dpr = this.dpr;
     // keyframe
     ctx.beginPath();
-    ctx.moveTo(posStart, offsetY + 5 * dpr);
-    ctx.lineTo(posEnd, offsetY + 5 * dpr);
-    ctx.lineTo(posEnd + 5 * dpr, offsetY);
-    ctx.lineTo(posEnd, offsetY - 5 * dpr);
-    ctx.lineTo(posStart, offsetY - 5 * dpr);
-    ctx.lineTo(posStart - 5 * dpr, offsetY);
+    ctx.moveTo(pos, offsetY + 5 * dpr);
+    ctx.lineTo(pos + 5 * dpr, offsetY);
+    ctx.lineTo(pos, offsetY - 5 * dpr);
+    ctx.lineTo(pos - 5 * dpr, offsetY);
     ctx.fill();
-    // timeline keyframe vertical lines
     ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    this.drawFlags(offsetY);
-  }
-
-  drawFlags(offsetY: number) {
-    const { ctx, flagColor } = this;
-    ctx.save();
-    ctx.fillStyle = flagColor;
-    const dpr = this.dpr;
-    this.flags.forEach((flagTime: number) => {
-      const pos = this.calPosFunc((this.keyframeTime + flagTime) / 1000);
-      // ctx.globalAlpha = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(pos, offsetY + 4 * dpr);
-      ctx.lineTo(pos + 4 * dpr, offsetY);
-      ctx.lineTo(pos, offsetY - 4 * dpr);
-      ctx.lineTo(pos - 4 * dpr, offsetY);
-      ctx.fill();
-    });
     ctx.restore();
   }
 }

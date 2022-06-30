@@ -1,18 +1,29 @@
-export class VerticalLine {
-  currentTime: any;
-  canvas: any;
-  ctx: any;
-  calPosFunc: any;
+import { Session } from "./Timeline";
+import { Widget } from "./Widget";
+
+interface VerticalLineParam {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  calPosFunc: (param: number) => number;
+  color?: string;
+  currentFrame?: number;
+}
+export class VerticalLine extends Widget {
+  currentFrame: number;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  calPosFunc: (param: number) => number;
   x: number;
   y: number;
   width: number;
-  height: any;
+  height: number;
   alpha: number;
-  color: any;
+  color: string;
   pos: number;
-  constructor(params: any) {
-    const { currentTime = 0, canvas, ctx, calPosFunc, color = "#AFD" } = params;
-    this.currentTime = currentTime;
+  constructor(params: VerticalLineParam) {
+    super();
+    const { currentFrame = 0, canvas, ctx, calPosFunc, color = "#AFD" } = params;
+    this.currentFrame = currentFrame;
     this.canvas = canvas;
     this.ctx = ctx;
     this.calPosFunc = calPosFunc;
@@ -25,10 +36,10 @@ export class VerticalLine {
     this.pos = 0;
   }
 
-  update(session: any) {}
+  update(session: Session) {}
 
   draw() {
-    const { ctx, canvas, currentTime, alpha, color, pos } = this;
+    const { ctx, canvas, currentFrame: currentTime, alpha, color, pos } = this;
     ctx.save();
     ctx.strokeStyle = ctx.fillStyle = color;
     ctx.globalAlpha = alpha;

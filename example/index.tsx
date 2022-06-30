@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom/client";
-import { Timeline, PropertyPanel } from "../src/index";
-import "antd/dist/antd.css";
+import { Timeline, PropertyPanel, AnimationClipEditor } from "../src/index";
+import "./index.less";
 
 let id = 0;
 class AnimationEditor extends Component {
@@ -14,70 +14,72 @@ class AnimationEditor extends Component {
   setScrollTopInput: HTMLInputElement;
   lineIndexInput: HTMLInputElement;
   componentDidMount() {
-    console.log(window.localStorage.timelineData);
-    const data = JSON.parse(window.localStorage.timelineData || "{}");
-    data.keyframesList &&
-      data.keyframesList.forEach((item) => {
-        if (item.id > id) {
-          id = item.id;
-        }
-      });
-    this.timeline.setData(data);
-    //propertyPanel
-    this.propertyPanel.setProperties([
-      {
-        name: "item1",
-        data: {
-          test: 1
-        },
-        onAdd: (name, data) => {
-          console.log(name, data);
-          this.timeline.addKeyframeData(0, {
-            id: ++id,
-            duration: 0,
-            data: data
-          });
-        }
-      },
-      {
-        name: "item2",
-        data: {
-          test: 2
-        },
-        onAdd: (name, data) => {
-          console.log(name, data);
-          this.timeline.addKeyframeData(1, {
-            id: ++id,
-            duration: 200,
-            flags: [0, 100],
-            data: data,
-            editable: false,
-            draggable: false
-          });
-        }
-      },
-      {
-        name: "item3",
-        data: {
-          test: 3
-        },
-        onAdd: (name, data) => {
-          console.log(name, data);
-          this.timeline.addKeyframeData(2, {
-            id: ++id,
-            duration: 300,
-            flags: [],
-            data: data,
-            editable: false
-          });
-        }
-      }
-    ]);
+    // console.log(window.localStorage.timelineData);
+    // const data = JSON.parse(window.localStorage.timelineData || "{}");
+    // data.keyframesList &&
+    //   data.keyframesList.forEach((item) => {
+    //     if (item.id > id) {
+    //       id = item.id;
+    //     }
+    //   });
+    // this.timeline.setData(data);
+    // //propertyPanel
+    // this.propertyPanel.setProperties([
+    //   {
+    //     name: "item1",
+    //     data: {
+    //       test: 1
+    //     },
+    //     onAdd: (name, data) => {
+    //       console.log(name, data);
+    //       this.timeline.addKeyframeData(0, {
+    //         id: ++id,
+    //         duration: 0,
+    //         data: data
+    //       });
+    //     }
+    //   },
+    //   {
+    //     name: "item2",
+    //     data: {
+    //       test: 2
+    //     },
+    //     onAdd: (name, data) => {
+    //       console.log(name, data);
+    //       this.timeline.addKeyframeData(1, {
+    //         id: ++id,
+    //         duration: 200,
+    //         flags: [0, 100],
+    //         data: data,
+    //         editable: false,
+    //         draggable: false
+    //       });
+    //     }
+    //   },
+    //   {
+    //     name: "item3",
+    //     data: {
+    //       test: 3
+    //     },
+    //     onAdd: (name, data) => {
+    //       console.log(name, data);
+    //       this.timeline.addKeyframeData(2, {
+    //         id: ++id,
+    //         duration: 300,
+    //         flags: [],
+    //         data: data,
+    //         editable: false
+    //       });
+    //     }
+    //   }
+    // ]);
   }
   render() {
     return (
       <div>
-        <h1>OasisUI-Timeline Demo</h1>
+        <h1>OasisUI-AnimationClipEditor Demo</h1>
+        <AnimationClipEditor />
+        {/* <h1>OasisUI-Timeline Demo</h1>
         <Timeline
           width={1300}
           height={300}
@@ -89,12 +91,7 @@ class AnimationEditor extends Component {
           widgetConfig={{
             keyframe: {
               editable: true,
-              draggable: true,
-              defaultColor: "#ccc",
-              selectedColor: "blue",
-              unEditableColor: "red",
-              unDraggableColor: "yellow",
-              flagColor: "#000"
+              draggable: true
             },
             splitline: {
               editable: true,
@@ -111,8 +108,8 @@ class AnimationEditor extends Component {
           onChange={() => {
             console.log(this.timeline.getData());
           }}
-        />
-        <div>
+        /> */}
+        {/* <div>
           设置当前时间
           <input
             type="number"
@@ -259,7 +256,7 @@ class AnimationEditor extends Component {
               this.timeline.setCurrentTime(val);
             }}
           />
-        </div>
+        </div> */}
       </div>
     );
   }

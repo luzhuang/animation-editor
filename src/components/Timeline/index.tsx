@@ -12,8 +12,8 @@ export class Timeline extends Component<any> {
     const { widgetConfig = {}, disableZoomByWheel = false, onKeyframeSelect, onChange, noNeedTicker } = this.props;
     const ctx = canvas!.getContext("2d");
     const timeline = (this.timeline = new TimelineCanvas({
-      canvas,
-      ctx,
+      canvas: canvas!,
+      ctx: ctx!,
       dpr: this.dpr,
       widgetConfig, // 内部组件配置
       disableZoomByWheel, // 是否禁用滚轮缩放
@@ -32,15 +32,13 @@ export class Timeline extends Component<any> {
   }
 
   getCurrentTime() {
-    return this.timeline!.currentTime;
+    return this.timeline!.currentFrame;
   }
 
   setCurrentTime(time: number) {
-    this.timeline!.currentTime = time;
+    this.timeline!.currentFrame = time;
   }
-  setDuration(duration: number) {
-    this.timeline!.duration = duration;
-  }
+
   setSpeed(speed: number) {
     this.speed = speed;
   }
@@ -63,10 +61,6 @@ export class Timeline extends Component<any> {
 
   addKeyframeData(lineIndex: number, keyframeData: any) {
     this.timeline!.addKeyframeData(lineIndex, keyframeData);
-  }
-
-  addSplitLine(time: number, options: any) {
-    this.timeline!.addSplitLine(time, options);
   }
 
   setScrollTop(scrollTop: number) {
