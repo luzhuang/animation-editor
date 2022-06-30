@@ -231,7 +231,7 @@ class AnimationEditor extends Component {
             添加分割线
           </button>
         </div>
-        <h1>OasisUI-AnimatorPropertyPanel Demo</h1>
+        <h1>OasisUI-AnimationPropertyPanel Demo</h1>
         <div className="propertyPanel">
           <PropertyPanel
             ref={(el) => {

@@ -1,1 +1,1 @@
-# animator-editor
+# animation-editor
