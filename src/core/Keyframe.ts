@@ -1,22 +1,21 @@
 import { CanvasInfo } from "./Timeline";
 export interface KeyframeData {
   id: number;
-  keyframeTime: number;
+  frame: number;
   lineIndex: number;
-  editable: boolean;
   draggable: boolean;
 }
 
 export interface KeyframeParam {
+  id: number;
   ctx: CanvasRenderingContext2D;
-  lineIndex: number;
-  scrollTop: number;
+  x: number;
+  y: number;
   keyframeData: KeyframeData;
   dpr: number;
   config: {
     defaultColor: string;
     selectedColor: string;
-    unEditableColor: string;
     unDraggableColor: string;
   };
 }
@@ -25,91 +24,66 @@ export class Keyframe {
   id: number;
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
-  keyframeTime: number;
-  lineIndex: number;
   dpr: number;
   x: number;
   y: number;
-  scrollTop: number;
   selected: boolean;
-  editable: boolean;
   draggable: boolean;
   defaultColor: string;
   selectedColor: string;
-  unEditableColor: string;
   unDraggableColor: string;
   canvasInfo?: CanvasInfo;
   width: number = 0;
+  frame: number;
 
-  get data(): KeyframeData {
-    const { id, keyframeTime, lineIndex, editable, draggable } = this;
-    return {
-      id,
-      keyframeTime,
-      lineIndex,
-      editable,
-      draggable
-    };
-  }
+  // get data(): KeyframeData {
+  //   const { id, keyframeTime, lineIndex, editable, draggable } = this;
+  //   return {
+  //     id,
+  //     keyframeTime,
+  //     lineIndex,
+  //     editable,
+  //     draggable
+  //   };
+  // }
+
   constructor(params: KeyframeParam) {
     const {
       ctx,
-      lineIndex = 0,
-      scrollTop = 0,
+      id,
+      x,
+      y,
       keyframeData,
       dpr = 1,
-      config: { defaultColor, selectedColor, unEditableColor, unDraggableColor }
+      config: { defaultColor, selectedColor, unDraggableColor }
     } = params;
-    const { id, keyframeTime, editable = true, draggable = true } = keyframeData;
+    const { frame, draggable = true } = keyframeData;
     this.id = id;
     this.ctx = ctx;
     this.canvas = ctx.canvas;
-    this.keyframeTime = keyframeTime;
-    this.lineIndex = +lineIndex;
+    this.frame = frame;
     this.dpr = dpr;
-    this.x = 0;
-    this.y = 0;
-    this.scrollTop = scrollTop;
+    this.x = x;
+    this.y = y;
     this.selected = false;
-    this.editable = editable;
     this.draggable = draggable;
     this.defaultColor = defaultColor;
     this.selectedColor = selectedColor;
-    this.unEditableColor = unEditableColor || defaultColor;
     this.unDraggableColor = unDraggableColor || defaultColor;
   }
 
-  update(canvasInfo: any) {
-    this.canvasInfo = canvasInfo;
-  }
-
   draw() {
-    const {
-      ctx,
-      selected,
-      scrollTop,
-      editable,
-      draggable,
-      defaultColor,
-      selectedColor,
-      unEditableColor,
-      unDraggableColor
-    } = this;
-    const { timelineHeight, rowHeight: lineHeight } = this.canvasInfo!;
+    const { ctx, selected, draggable, defaultColor, selectedColor, unDraggableColor } = this;
     ctx.save();
-    const y = timelineHeight + this.lineIndex * lineHeight - scrollTop;
     ctx.fillStyle = defaultColor;
-    if (!editable) {
-      ctx.fillStyle = unEditableColor;
+    if (selected) {
+      ctx.fillStyle = selectedColor;
     }
     if (!draggable) {
       ctx.fillStyle = unDraggableColor;
     }
-    if (selected) {
-      ctx.fillStyle = selectedColor;
-    }
     ctx.globalAlpha = 1;
-    const offsetY = (this.y = y + lineHeight * 0.5);
+    const offsetY = this.y;
     ctx.strokeStyle = defaultColor;
     const pos = this.x;
     const dpr = this.dpr;

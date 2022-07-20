@@ -43,3 +43,5 @@ export class Ticker {
 
   update(frequency: number) {}
 }
+
+export default new Ticker();

@@ -14,6 +14,7 @@ class AnimationEditor extends Component {
   setScrollTopInput: HTMLInputElement;
   lineIndexInput: HTMLInputElement;
   componentDidMount() {
+    console.log(111);
     // console.log(window.localStorage.timelineData);
     // const data = JSON.parse(window.localStorage.timelineData || "{}");
     // data.keyframesList &&
@@ -172,10 +173,7 @@ class AnimationEditor extends Component {
             onClick={() => {
               this.timeline.addKeyframeData(+this.lineIndexInput.value, {
                 id: id++,
-                duration: this.keyframeDurationInput.value,
-                data: {
-                  test: id
-                }
+               
               });
             }}
           >
@@ -264,6 +262,7 @@ class AnimationEditor extends Component {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <AnimationEditor />
     <AnimationEditor />
   </React.StrictMode>
 );

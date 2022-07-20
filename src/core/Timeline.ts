@@ -3,17 +3,16 @@ import { Widget } from "./Widget";
 import { CurrentTimeLine } from "./CurrentTimeLine";
 import { PlayState } from "../enum/playState";
 import { clamp } from "../utils";
-import { Keyframe } from "./Keyframe";
+import { Keyframe, KeyframeData } from "./Keyframe";
 
 export interface Session {
   start: number;
   end: number;
   duration: number;
-  currentFrame: number;
   tickNum: number;
   frameToPixels: number;
   tagPerFrame: number;
-  samples: number;
+  currentFrame: number;
 }
 
 export interface CanvasInfo {
@@ -39,6 +38,12 @@ export interface TimelineParam {
   disableZoomByWheel: boolean;
   onKeyframeSelect: (keyframe: Keyframe) => void;
   onChange: () => void;
+  onUpdateCurrentFrame: () => void;
+}
+
+export interface KeyframeInfo {
+  lineIndex: number;
+  keyframe: Keyframe;
 }
 
 export class Timeline {
@@ -61,7 +66,7 @@ export class Timeline {
   currentTimeLine?: CurrentTimeLine;
   prevMouse: number[];
   dragging: boolean;
-  selectedCurrentTime: boolean = false;
+  selectedCurrentTimeLine: boolean = false;
   scrolling: boolean = false;
   wrapMode: WrapMode = WrapMode.Loop;
 
@@ -76,29 +81,30 @@ export class Timeline {
 
   private _scrollTop: number;
   private _currentFrame: number;
+  private _samples: number;
   private _frames: never[];
 
-  get data() {
-    const { currentFrame: currentTime, scrollTop, keyframesList } = this;
-    return {
-      currentTime,
-      scrollTop,
-      keyframesList: keyframesList.map((keyframe) => keyframe.data)
-    };
-  }
+  // get data() {
+  //   const { currentFrame: currentTime, scrollTop, keyframesList } = this;
+  //   return {
+  //     currentTime,
+  //     scrollTop,
+  //     keyframesList: keyframesList.map((keyframe) => keyframe.data)
+  //   };
+  // }
 
-  set data(data) {
-    const { currentTime = 0, scrollTop = 0, keyframesList = [] } = data || {};
-    this.currentFrame = currentTime;
-    this.scrollTop = scrollTop;
-    this.keyframes = {};
-    this.keyframesList = [];
-    keyframesList.forEach((keyframe) => {
-      this.addKeyframeData(keyframe.lineIndex, keyframe);
-    });
-    this.setDefaultZoom();
-    this.draw();
-  }
+  // set data(data) {
+  //   const { currentTime = 0, scrollTop = 0, keyframesList = [] } = data || {};
+  //   this.currentFrame = currentTime;
+  //   this.scrollTop = scrollTop;
+  //   this.keyframes = {};
+  //   this.keyframesList = [];
+  //   keyframesList.forEach((keyframe) => {
+  //     this.addKeyframeData(keyframe.lineIndex, keyframe);
+  //   });
+  //   this.setDefaultZoom();
+  //   this.draw();
+  // }
 
   get scrollTop() {
     return this._scrollTop;
@@ -107,9 +113,6 @@ export class Timeline {
   set scrollTop(scrollTop) {
     if (scrollTop === this._scrollTop || scrollTop < 0) return;
     this._scrollTop = scrollTop;
-    this.keyframesList.forEach((keyframe: { scrollTop: any }) => {
-      keyframe.scrollTop = scrollTop;
-    });
     this.draw();
   }
 
@@ -117,23 +120,49 @@ export class Timeline {
     return this._currentFrame;
   }
 
-  set currentFrame(frame) {
+  set currentFrame(frame: number) {
     frame = clamp(frame, 0, this.session.duration);
     if (frame == this._currentFrame) return;
     this._currentFrame = frame;
     this.session.currentFrame = frame;
     this.draw();
-    this.onUpdateCurrentFrame && this.onUpdateCurrentFrame(frame);
   }
 
-  constructor({ canvas, ctx, dpr, widgetConfig, disableZoomByWheel, onKeyframeSelect, onChange }: TimelineParam) {
+  get samples() {
+    return this._samples;
+  }
+
+  set samples(samples: number) {
+    this._samples = samples;
+    this.draw();
+  }
+
+  constructor({
+    canvas,
+    ctx,
+    dpr,
+    widgetConfig,
+    disableZoomByWheel,
+    onKeyframeSelect,
+    onChange,
+    onUpdateCurrentFrame
+  }: TimelineParam) {
     const rect = canvas.getBoundingClientRect();
     this.canvas = canvas;
     this.dpr = dpr;
-    this.widgetConfig = widgetConfig;
+    this.widgetConfig = widgetConfig || {
+      keyframe: {
+        editable: true,
+        draggable: true,
+        defaultColor: "#9AF",
+        selectedColor: "#FC6",
+        unDraggableColor: "#eee"
+      }
+    };
     this.disableZoomByWheel = disableZoomByWheel;
     this.onKeyframeSelect = onKeyframeSelect;
     this.onChange = onChange;
+    this.onUpdateCurrentFrame = onUpdateCurrentFrame;
     this.ctx = ctx;
     this.ctx.fillStyle = "#222";
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -143,16 +172,14 @@ export class Timeline {
       timelineHeight: 35 * dpr,
       rowHeight: 24 * dpr
     };
-
     this.session = {
       start: 0,
       end: 60,
       duration: 60,
-      samples: 1,
-      currentFrame: 0,
       frameToPixels: 40, // how many pixels represent one frame
       tickNum: 1,
-      tagPerFrame: 5
+      tagPerFrame: 5,
+      currentFrame: 0
     };
     this.enable = false;
     this.state = PlayState.INIT;
@@ -161,6 +188,7 @@ export class Timeline {
     this.keyframesList = [];
     this.prevMouse = [];
     this.dragging = false;
+    this._samples = 0;
     this._currentFrame = 0;
     this._scrollTop = 0;
     this._frames = [];
@@ -208,7 +236,7 @@ export class Timeline {
   }
 
   drawTimeInfo() {
-    const { ctx, canvas } = this;
+    const { ctx, canvas, _samples } = this;
     const data = this.session;
     const { timelineHeight } = this.canvasInfo;
     ctx.fillStyle = "#111";
@@ -218,7 +246,6 @@ export class Timeline {
     ctx.beginPath();
     const frames: number[][] = this._frames;
     this._frames.length = 0;
-    console.log(data.end);
     for (let frame = 0; frame <= data.end; frame += data.tickNum) {
       const x = this.canvasFrameToX(frame);
       if (x < 0) continue;
@@ -244,7 +271,7 @@ export class Timeline {
     ctx.fillStyle = "#888";
     for (let i = 0; i < frames.length; ++i) {
       const [x, frame] = frames[i];
-      let text = `${Math.floor(frame / data.samples)}:${((frame % data.samples) / 100).toFixed(2).split(".")[1]}`;
+      let text = `${Math.floor(frame / _samples)}:${((frame % _samples) / 100).toFixed(2).split(".")[1]}`;
 
       // 先计算宽度，确认文字不会重叠才绘制
       const [, , prevX] = frames[i - 1] || [];
@@ -305,7 +332,7 @@ export class Timeline {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     this.drawBg();
     keyframesList.forEach((keyframe: Keyframe) => {
-      keyframe.update(canvasInfo);
+      keyframe.x = this.canvasFrameToX(keyframe.frame);
       keyframe.draw();
     });
     this.drawTimeInfo();
@@ -323,7 +350,6 @@ export class Timeline {
       this.session.tagPerFrame = 1;
     } else {
       this.session.tagPerFrame = 5;
-      console.log("zoom", this.session.tickNum);
     }
   }
 
@@ -331,9 +357,9 @@ export class Timeline {
     const { keyframesList } = this;
     let closestTime = null;
     for (let i = keyframesList.length - 1; i >= 0; --i) {
-      const { keyframeTime } = keyframesList[i];
-      if (keyframeTime < this.currentFrame && keyframeTime >= 0) {
-        closestTime = keyframesList[i].keyframeTime;
+      const { frame } = keyframesList[i];
+      if (frame < this.currentFrame && frame >= 0) {
+        closestTime = keyframesList[i].frame;
         break;
       }
     }
@@ -346,9 +372,9 @@ export class Timeline {
     const { keyframesList } = this;
     let closestTime = null;
     for (let i = 0; i < keyframesList.length; ++i) {
-      const { keyframeTime } = keyframesList[i];
-      if (keyframeTime > this.currentFrame && keyframeTime <= this.session.duration) {
-        closestTime = keyframesList[i].keyframeTime;
+      const { frame } = keyframesList[i];
+      if (frame > this.currentFrame && frame <= this.session.duration) {
+        closestTime = keyframesList[i].frame;
         break;
       }
     }
@@ -373,7 +399,7 @@ export class Timeline {
         items.push(widget);
       }
     });
-    keyframesList.forEach((keyframe: { selected: boolean; x: number; width: any; y: number }) => {
+    keyframesList.forEach((keyframe: { selected: boolean; x: number; width: number; y: number }) => {
       keyframe.selected = false;
       if (
         keyframe.x - 5 <= e.canvasX &&
@@ -407,19 +433,18 @@ export class Timeline {
     if (e.canvasY < 0) {
       e.canvasY = 0;
     }
-
     if (e.type === "mousedown") {
       const items = this.getMouseSelection(e);
       items.forEach((item) => {
         if (item instanceof CurrentTimeLine) {
           this.canvas.style.cursor = "col-resize";
-          this.selectedCurrentTime = true;
+          this.selectedCurrentTimeLine = true;
         }
         if (item instanceof Keyframe) {
-          if (item.editable || item.draggable) {
+          if (item.draggable) {
             item.selected = true;
             this.selectedKeyframe = item;
-            this.selectedCurrentTime = false;
+            // this.selectedCurrentTimeLine = false;
           }
         }
       });
@@ -433,13 +458,13 @@ export class Timeline {
       e.stopPropagation();
     }
     if (e.type === "mousemove") {
-      const time = this.canvasXToFrame(e.canvasX);
+      const frame = this.canvasXToFrame(e.canvasX);
       if (this.dragging) {
-        if (this.selectedCurrentTime) {
-          this.currentFrame = time * 1000;
+        if (this.selectedCurrentTimeLine) {
+          this.currentFrame = frame;
         } else if (this.selectedKeyframe) {
           if (this.selectedKeyframe.draggable) {
-            this.selectedKeyframe.keyframeTime = this.canvasXToFrame(e.canvasX) * 1000;
+            this.selectedKeyframe.frame = this.canvasXToFrame(e.canvasX);
             this.draw();
           }
         } else {
@@ -463,6 +488,7 @@ export class Timeline {
       e.stopPropagation();
     }
     if (e.type === "mouseup") {
+      console.log("mouseup");
       const frame = this.canvasXToFrame(e.canvasX);
       const noSelected = !this.selectedKeyframe;
       if (this.selectedKeyframe) {
@@ -473,10 +499,11 @@ export class Timeline {
       if (noSelected && !this.scrolling) {
         this.currentFrame = frame;
       }
-      this.selectedCurrentTime = false;
+      this.selectedCurrentTimeLine = false;
       this.dragging = false;
       this.scrolling = false;
       this.canvas.style.cursor = "default";
+      this.onUpdateCurrentFrame && this.onUpdateCurrentFrame(Math.floor(frame));
     }
 
     return true;
@@ -513,46 +540,51 @@ export class Timeline {
     }
   }
 
-  addKeyframeData(lineIndex: number, keyframeData: Keyframe["data"]) {
-    const { scrollTop } = this;
-    const { currentFrame: currentTime, widgetConfig } = this;
-    const { editable, draggable, defaultColor, selectedColor, unEditableColor, unDraggableColor } =
-      widgetConfig.keyframe;
-    const { id } = keyframeData;
-    if (this.keyframes[id]) return null;
-    if (isNaN(keyframeData.keyframeTime)) {
-      keyframeData.keyframeTime = currentTime;
-    }
-    if (keyframeData.editable === undefined) {
-      keyframeData.editable = editable;
-    }
-    if (keyframeData.draggable === undefined) {
-      keyframeData.draggable = draggable;
-    }
+  addKeyframeData(lineIndex: number, keyframeData: KeyframeData) {
+    const { ctx, dpr, scrollTop, keyframesList, canvasInfo } = this;
+    const { timelineHeight, rowHeight } = canvasInfo;
+    const { currentFrame, widgetConfig } = this;
+    const { draggable = true, defaultColor, selectedColor, unDraggableColor } = widgetConfig.keyframe;
+    const id = keyframesList[keyframesList.length - 1]?.id + 1 || 0;
+    const x = this.canvasFrameToX(currentFrame);
+    const y = timelineHeight + lineIndex * rowHeight - scrollTop + rowHeight * 0.5;
+    keyframeData.frame = currentFrame;
+    keyframeData.draggable = draggable;
     const keyframe = new Keyframe({
-      ctx: this.ctx,
-      lineIndex,
-      scrollTop,
+      id,
+      ctx,
+      x,
+      y,
       keyframeData,
-      dpr: this.dpr,
+      dpr,
       config: {
         defaultColor,
         selectedColor,
-        unEditableColor,
         unDraggableColor
       }
     });
     this.keyframes[id] = keyframe;
     this.keyframesList.push(keyframe);
-    this.keyframesList.sort((a, b) => a.keyframeTime - b.keyframeTime);
+    this.keyframesList.sort((a, b) => a.frame - b.frame);
     this.draw();
     this.onChange && this.onChange();
     return keyframe;
   }
 
+  updateKeyframesPos(keyframeInfoList: KeyframeInfo[]) {
+    keyframeInfoList.forEach((keyframeInfo) => {
+      const { lineIndex, keyframe } = keyframeInfo;
+      const { scrollTop, canvasInfo } = this;
+      const { timelineHeight, rowHeight } = canvasInfo;
+      const y = timelineHeight + lineIndex * rowHeight - scrollTop + rowHeight * 0.5;
+      keyframe.y = y;
+      keyframe.draw();
+    });
+  }
+
   update(deltaTime: number) {
     if (this.state !== PlayState.PLAYING) return;
-    this.currentFrame += (deltaTime * this.session.samples) / 1000;
+    this.currentFrame += (deltaTime * this._samples) / 1000;
     if (this.currentFrame >= this.session.duration) {
       if (this.wrapMode === WrapMode.Loop) {
         this.replay();
@@ -598,7 +630,7 @@ export class Timeline {
     const { keyframesList } = this;
     const deleted = [];
     for (let i = keyframesList.length - 1; i >= 0; --i) {
-      if (keyframesList[i].selected && keyframesList[i].editable) {
+      if (keyframesList[i].selected) {
         const keyframe = keyframesList[i];
         deleted.push(keyframe.id);
         delete this.keyframes[keyframe.id];
