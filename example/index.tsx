@@ -263,6 +263,5 @@ class AnimationEditor extends Component {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AnimationEditor />
-    <AnimationEditor />
   </React.StrictMode>
 );

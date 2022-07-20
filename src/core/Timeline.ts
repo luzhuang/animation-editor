@@ -76,7 +76,7 @@ export class Timeline {
   onStop?: () => void;
   onPause?: () => void;
   onPlay?: () => void;
-  onUpdateCurrentFrame?: (time: number) => void;
+  onUpdateCurrentFrame: (time: number) => void;
   selectedKeyframe: Keyframe | null = null;
 
   private _scrollTop: number;
@@ -291,7 +291,7 @@ export class Timeline {
   }
 
   canvasXToFrame(x: number) {
-    return (x - 30) / this.session.frameToPixels + this.session.start;
+    return Math.floor((x - 30) / this.session.frameToPixels + this.session.start);
   }
 
   drawBg() {
@@ -444,7 +444,7 @@ export class Timeline {
           if (item.draggable) {
             item.selected = true;
             this.selectedKeyframe = item;
-            // this.selectedCurrentTimeLine = false;
+            this.selectedCurrentTimeLine = false;
           }
         }
       });
@@ -499,11 +499,11 @@ export class Timeline {
       if (noSelected && !this.scrolling) {
         this.currentFrame = frame;
       }
-      this.selectedCurrentTimeLine = false;
+      // this.selectedCurrentTimeLine = false;
       this.dragging = false;
       this.scrolling = false;
       this.canvas.style.cursor = "default";
-      this.onUpdateCurrentFrame && this.onUpdateCurrentFrame(Math.floor(frame));
+      this.onUpdateCurrentFrame(Math.floor(frame));
     }
 
     return true;
@@ -585,6 +585,7 @@ export class Timeline {
   update(deltaTime: number) {
     if (this.state !== PlayState.PLAYING) return;
     this.currentFrame += (deltaTime * this._samples) / 1000;
+    this.onUpdateCurrentFrame(Math.floor(this.currentFrame));
     if (this.currentFrame >= this.session.duration) {
       if (this.wrapMode === WrapMode.Loop) {
         this.replay();
@@ -623,6 +624,7 @@ export class Timeline {
   reset() {
     this.state = PlayState.INIT;
     this.currentFrame = 0;
+    this.onUpdateCurrentFrame(0);
     this.onReset && this.onReset();
   }
 

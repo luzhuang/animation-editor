@@ -66,14 +66,13 @@ export class AnimationClipEditor extends Component<null> {
     scrollTop: 0
   };
   propertiesMap: Record<string, any> = {};
-  keyFramesMap: Record<string, Keyframe> = {};
+  keyFramesMap: Record<string, Keyframe[]> = {};
   timeLineRef = React.createRef<Timeline>();
   // const timeLineRef = useRef<Timeline>();
   // const [currentFrame, setCurrentFrame] = useState(0);
   // const [samples, setSamples] = useState(60);
 
   componentDidMount() {
-    console.log(222);
     this.formatProperties();
   }
 
@@ -93,9 +92,11 @@ export class AnimationClipEditor extends Component<null> {
             lineIndex
           });
           this.propertiesMap[`${index}-${subIndex}`] = subProperty;
-          const keyframe = this.keyFramesMap[`${index}-${subIndex}`];
-          if (keyframe) {
-            keyframe.draggable = expanded;
+          const keyframes = this.keyFramesMap[`${index}-${subIndex}`];
+          if (keyframes && keyframes.length) {
+            keyframes.forEach((keyframe) => {
+              keyframe.draggable = expanded;
+            });
           }
           return newSubProperty;
         })
@@ -141,19 +142,22 @@ export class AnimationClipEditor extends Component<null> {
             onAddKeyframe={(keyframeData: KeyframeData) => {
               const timeLine = timeLineRef.current!;
               const keyframe = timeLine.addKeyframe(keyframeData);
-              this.keyFramesMap[keyframeData.key] = keyframe;
+              this.keyFramesMap[keyframeData.key] = this.keyFramesMap[keyframeData.key] || [];
+              this.keyFramesMap[keyframeData.key].push(keyframe);
             }}
             onExpand={(key: string, expanded: boolean) => {
               const timeLine = timeLineRef.current!;
               this.propertiesMap[key].expanded = expanded;
               this.formatProperties();
-              const keyframeInfoList = [];
+              const keyframeInfoList: any[] = [];
               for (let key in this.keyFramesMap) {
                 const propertyInfo = this.propertiesMap[key];
-                const keyframe = this.keyFramesMap[key];
-                keyframeInfoList.push({
-                  lineIndex: propertyInfo.lineIndex,
-                  keyframe
+                const keyframes = this.keyFramesMap[key];
+                keyframes.forEach((keyframe) => {
+                  keyframeInfoList.push({
+                    lineIndex: propertyInfo.lineIndex,
+                    keyframe
+                  });
                 });
               }
               timeLine.updateKeyframesPos(keyframeInfoList);
